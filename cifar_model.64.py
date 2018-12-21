@@ -25,7 +25,7 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-image_size = 128
+image_size = 64
 
 
 def _leaky_relu(x):
@@ -76,10 +76,7 @@ def discriminator(x, is_training=True, scope='Discriminator'):
         x = _conv2d(x, df_dim*8, 5, 2, name='d_conv4')
         x = _leaky_relu(_batch_norm(x, is_training, name='d_bn4'))
 
-        x = _conv2d(x, df_dim*16, 5, 2, name='d_conv5')
-        x = _leaky_relu(_batch_norm(x, is_training, name='d_bn5'))
-
-        x = tf.reshape(x, [-1, s16, s16, df_dim*16])
+        x = tf.reshape(x, [-1, s16, s16, df_dim*8])
 
         x = _dense(x, 1, name='d_fc_4')
 
@@ -91,13 +88,10 @@ def generator(x, is_training=True, scope='Generator'):
     gf_dim = 64
     c_dim = 3
     with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
-        x = _dense(x, gf_dim * 16 * s16 * s16, name='g_fc1')
+        x = _dense(x, gf_dim * 8 * s16 * s16, name='g_fc1')
         x = tf.nn.relu(_batch_norm(x, is_training, name='g_bn1'))
 
-        x = tf.reshape(x, [-1, s16, s16, gf_dim*16], name="reshape_1")
-
-        x = _deconv2d(x, gf_dim * 8, 5, 2, name='g_dconv1')
-        x = tf.nn.relu(_batch_norm(x, is_training, name='g_bn1_5'))
+        x = tf.reshape(x, [-1, s16, s16, gf_dim*8], name="reshape_1")
 
         x = _deconv2d(x, gf_dim * 4, 5, 2, name='g_dconv2')
         x = tf.nn.relu(_batch_norm(x, is_training, name='g_bn2'))

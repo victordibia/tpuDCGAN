@@ -30,7 +30,7 @@ flags.DEFINE_string('cifar_train_data_file', '',
                     'Path to CIFAR10 training data.')
 flags.DEFINE_string('cifar_test_data_file', '', 'Path to CIFAR10 test data.')
 
-image_size = 64
+image_size = 128
 
 
 def parser(serialized_example):
