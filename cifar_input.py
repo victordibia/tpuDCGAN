@@ -30,6 +30,8 @@ flags.DEFINE_string('cifar_train_data_file', '',
                     'Path to CIFAR10 training data.')
 flags.DEFINE_string('cifar_test_data_file', '', 'Path to CIFAR10 test data.')
 
+image_size = 64
+
 
 def parser(serialized_example):
     """Parses a single tf.Example into image and label tensors."""
@@ -40,7 +42,7 @@ def parser(serialized_example):
             'label': tf.FixedLenFeature([], tf.int64),
         })
     image = tf.decode_raw(features['image'], tf.uint8)
-    image.set_shape([64*64*3])
+    image.set_shape([image_size*image_size*3])
     # Normalize the values of the image from the range [0, 255] to [-1.0, 1.0]
     image = tf.cast(image, tf.float32) * (2.0 / 255) - 1.0
 #   image = tf.transpose(tf.reshape(image, [3, 32*32]))
@@ -67,7 +69,7 @@ class InputFunction(object):
         images, labels = dataset.make_one_shot_iterator().get_next()
 
         # Reshape to give inputs statically known shapes.
-        images = tf.reshape(images, [batch_size, 32, 32, 3])
+        images = tf.reshape(images, [batch_size, image_size, image_size, 3])
 
         random_noise = tf.random_normal([batch_size, self.noise_dim])
 
