@@ -64,23 +64,23 @@ def discriminator(x, is_training=True, scope='Discriminator'):
     s16 = image_size // 16
     df_dim = 64   # Dimension of discrim filters in first conv layer. [64]
     with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
-            x = _conv2d(x, df_dim, 5, 2, name='d_conv1')
-            x = _leaky_relu(x)
+        x = _conv2d(x, df_dim, 5, 2, name='d_conv1')
+        x = _leaky_relu(x)
 
-            x = _conv2d(x, df_dim*2, 5, 2, name='d_conv2')
-            x = _leaky_relu(_batch_norm(x, is_training, name='d_bn2'))
+        x = _conv2d(x, df_dim*2, 5, 2, name='d_conv2')
+        x = _leaky_relu(_batch_norm(x, is_training, name='d_bn2'))
 
-            x = _conv2d(x, df_dim*4, 5, 2, name='d_conv3')
-            x = _leaky_relu(_batch_norm(x, is_training, name='d_bn3'))
+        x = _conv2d(x, df_dim*4, 5, 2, name='d_conv3')
+        x = _leaky_relu(_batch_norm(x, is_training, name='d_bn3'))
 
-            x = _conv2d(x, df_dim*8, 5, 2, name='d_conv4')
-            x = _leaky_relu(_batch_norm(x, is_training, name='d_bn4'))
+        x = _conv2d(x, df_dim*8, 5, 2, name='d_conv4')
+        x = _leaky_relu(_batch_norm(x, is_training, name='d_bn4'))
 
-            x = tf.reshape(x, [-1, s16, s16, df_dim*8])
+        x = tf.reshape(x, [-1, s16, s16, df_dim*8])
 
-            x = _dense(x, 1, name='d_fc_4')
+        x = _dense(x, 1, name='d_fc_4')
 
-            return x
+        return x
 
 
 def generator(x, is_training=True, scope='Generator'):
@@ -102,7 +102,7 @@ def generator(x, is_training=True, scope='Generator'):
         x = _deconv2d(x, gf_dim, 5, 2, name='g_dconv4')
         x = tf.nn.relu(_batch_norm(x, is_training, name='g_bn4'))
 
-        x = _deconv2d(x, c_dim, 5, 2, name='g_dconv4')
+        x = _deconv2d(x, c_dim, 5, 2, name='g_dconv5')
         x = tf.tanh(x)
 
         return x
