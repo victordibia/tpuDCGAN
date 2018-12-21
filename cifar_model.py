@@ -61,7 +61,7 @@ def _deconv2d(x, filters, kernel_size, stride, name):
 
 
 def discriminator(x, is_training=True, scope='Discriminator'):
-    s16 = image_size // 16
+    s16 = image_size // 32
     df_dim = 64   # Dimension of discrim filters in first conv layer. [64]
     with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
         x = _conv2d(x, df_dim, 5, 2, name='d_conv1')
@@ -87,7 +87,7 @@ def discriminator(x, is_training=True, scope='Discriminator'):
 
 
 def generator(x, is_training=True, scope='Generator'):
-    s16 = image_size // 16
+    s16 = image_size // 32
     gf_dim = 64
     c_dim = 3
     with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
