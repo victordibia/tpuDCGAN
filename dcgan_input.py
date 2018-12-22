@@ -26,9 +26,9 @@ import tensorflow as tf
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_string('cifar_train_data_file', '',
+flags.DEFINE_string('train_data_file', '',
                     'Path to CIFAR10 training data.')
-flags.DEFINE_string('cifar_test_data_file', '', 'Path to CIFAR10 test data.')
+flags.DEFINE_string('test_data_file', '', 'Path to CIFAR10 test data.')
 flags.DEFINE_integer('image_size', 128,
                      'Image size. Default is 128')
 
@@ -56,8 +56,8 @@ class InputFunction(object):
     def __init__(self, is_training, noise_dim):
         self.is_training = is_training
         self.noise_dim = noise_dim
-        self.data_file = (FLAGS.cifar_train_data_file if is_training
-                          else FLAGS.cifar_test_data_file)
+        self.data_file = (FLAGS.train_data_file if is_training
+                          else FLAGS.test_data_file)
         self.image_size = FLAGS.image_size
 
     def __call__(self, params):
