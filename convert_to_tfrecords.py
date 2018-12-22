@@ -90,7 +90,7 @@ def convert_folder_tf(data_dir, output_file, display_images, image_size):
                                 plt.imshow(image)
                                 plt.show()
                             bytes_feat = _bytes_feature(image_raw)
-                            print(index, " Writing to tfrecord | ", " Size: ", len(image_raw), " Directory: ", dir)
+                            print(index, " Writing to tfrecord | ", " Image size: ", image_size, " Directory: ", dir)
                             example = tf.train.Example(features=tf.train.Features(feature={
                                 'image': _bytes_feature(image_raw),
                                 'label': _int64_feature(dir_count)
