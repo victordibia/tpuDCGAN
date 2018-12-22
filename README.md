@@ -7,7 +7,13 @@ This repo contains code to train an unconditional DCGAN using TPUs on Google Clo
 
 ## Training
 
-```cmd
+- Please follow the official tensorflow tutorial on setting up a TPU instance. 
+- Clone this repo
+```shell
+git clone https://github.com/victordibia/tpuDCGAN
+```
+- Start Training
+```shell
 export export GCS_BUCKET_NAME=  <Your GCS Bucket>
 python dcgan_main.py --tpu=$TPU_NAME --train_data_file=gs://$GCS_BUCKET_NAME/data/masks/train_masks.tfrecords   --dataset=dcgan64 --train_steps=10000 --train_steps_per_eval=500 --model_dir=gs://$GCS_BUCKET_NAME/dcgan/masks/model --test_data_file=gs://$GCS_BUCKET_NAME/data/rand/test.tfrecords
 
