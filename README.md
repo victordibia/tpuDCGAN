@@ -5,6 +5,14 @@ This repo contains code to train an unconditional DCGAN using TPUs on Google Clo
 - Support for `64*64` and `128*128` generation: Provide two model architectures (mainly additional layers) that support generating higher resolution images (64, 128).
 - Images to TFRecords: A script is available to convert images in a folder to TFRecords required to train the DCGAN.
 
+## Convert Images
+
+The `convert_to_tfrecords` script accepts arguments for data directory (`data_dir`) and output file (`output_file`). Data directory is expected to have folders which contain images directly.
+
+```shell
+python convert_to_tfrecords
+```
+
 ## Training
 
 - Please follow the official tensorflow tutorial on setting up a TPU instance. 
