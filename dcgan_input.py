@@ -29,8 +29,10 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string('cifar_train_data_file', '',
                     'Path to CIFAR10 training data.')
 flags.DEFINE_string('cifar_test_data_file', '', 'Path to CIFAR10 test data.')
+flags.DEFINE_integer('image_size', 128,
+                     'Image size. Default is 128')
 
-image_size = 128
+image_size = FLAGS.image_size
 
 
 def parser(serialized_example):
@@ -45,7 +47,7 @@ def parser(serialized_example):
     image.set_shape([image_size*image_size*3])
     # Normalize the values of the image from the range [0, 255] to [-1.0, 1.0]
     image = tf.cast(image, tf.float32) * (2.0 / 255) - 1.0
-#   image = tf.transpose(tf.reshape(image, [3, 32*32]))
+#   image = tf.transpose(tf.reshape(image, [3, 32*32])) Not needed as ourimage is already in shape image_size * image_size * 3
     label = tf.cast(features['label'], tf.int32)
     return image, label
 

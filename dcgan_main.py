@@ -29,8 +29,6 @@ import tensorflow as tf
 
 import cifar_input
 import cifar_model
-import mnist_input
-import mnist_model
 from tensorflow.python.estimator import estimator
 
 FLAGS = flags.FLAGS
@@ -50,8 +48,8 @@ flags.DEFINE_string(
     'will attempt to automatically detect the GCE project from metadata.')
 
 # Model specific paramenters
-flags.DEFINE_string('dataset', 'mnist',
-                    'One of ["mnist", "cifar"]. Requires additional flags')
+flags.DEFINE_string('dataset', 'dcgan128',
+                    'One of ["dcgan64", "dcgan128"]. Denotes the size of input/generated images .. 64*64 or 128*128')
 flags.DEFINE_string('model_dir', '', 'Output model directory')
 flags.DEFINE_integer('noise_dim', 64,
                      'Number of dimensions for the noise vector')
@@ -69,7 +67,7 @@ flags.DEFINE_boolean('eval_loss', False,
                      'Evaluate discriminator and generator loss during eval')
 flags.DEFINE_boolean('use_tpu', True, 'Use TPU for training')
 
-_NUM_VIZ_IMAGES = 36   # For generating a 10x10 grid of generator samples
+_NUM_VIZ_IMAGES = 36   # For generating a x by x grid of generator samples
 
 # Global variables for data and model
 dataset = None

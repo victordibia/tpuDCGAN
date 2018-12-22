@@ -17,6 +17,11 @@
 Based on the convolutional and "deconvolutional" models presented in
 "Unsupervised Representation Learning with Deep Convolutional Generative
 Adversarial Networks" by A. Radford et. al.
+
+Extended to:
+- Support 128 * 128 images
+- Add 2 additional layers to discriminator and generator.
+- Add support for image_size flags. Note: You will need to modify D and G to support new image sizes.
 """
 
 from __future__ import absolute_import
@@ -30,8 +35,18 @@ from absl import flags
 FLAGS = flags.FLAGS
 flags.DEFINE_integer('image_size', 128,
                      'Image size. Default is 128')
+flags.DEFINE_integer('df_dim', 64,
+                     'Number of filters for discriminator')
+flags.DEFINE_integer('gf_dim', 64,
+                     'Number of filters for generator')
+flags.DEFINE_integer('c_dim', 3,
+                     'Number of image channels')
 
 image_size = FLAGS.image_size
+s16 = image_size // 32
+df_dim = FLAGS.df_dim
+gf_dim = FLAGS.gf_dim
+c_dim = FLAGS.gf_dim
 
 
 def _leaky_relu(x):
@@ -67,8 +82,6 @@ def _deconv2d(x, filters, kernel_size, stride, name):
 
 
 def discriminator(x, is_training=True, scope='Discriminator'):
-    s16 = image_size // 32
-    df_dim = 64   # Dimension of discrim filters in first conv layer. [64]
     with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
         x = _conv2d(x, df_dim, 5, 2, name='d_conv1')
         x = _leaky_relu(x)
@@ -93,9 +106,6 @@ def discriminator(x, is_training=True, scope='Discriminator'):
 
 
 def generator(x, is_training=True, scope='Generator'):
-    s16 = image_size // 32
-    gf_dim = 64
-    c_dim = 3
     with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
         x = _dense(x, gf_dim * 16 * s16 * s16, name='g_fc1')
         x = tf.nn.relu(_batch_norm(x, is_training, name='g_bn1'))
