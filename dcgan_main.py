@@ -68,7 +68,7 @@ flags.DEFINE_boolean('eval_loss', False,
                      'Evaluate discriminator and generator loss during eval')
 flags.DEFINE_boolean('use_tpu', True, 'Use TPU for training')
 
-_NUM_VIZ_IMAGES = 50   # For generating a x by x grid of generator samples
+_NUM_VIZ_IMAGES = 100  # For generating a x by x grid of generator samples
 
 # Global variables for data and model
 dataset = None
