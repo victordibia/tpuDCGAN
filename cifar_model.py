@@ -24,8 +24,14 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
+from absl import flags
 
-image_size = 128
+
+FLAGS = flags.FLAGS
+flags.DEFINE_integer('image_size', 128,
+                     'Image size. Default is 128')
+
+image_size = FLAGS.image_size
 
 
 def _leaky_relu(x):

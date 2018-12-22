@@ -69,7 +69,7 @@ flags.DEFINE_boolean('eval_loss', False,
                      'Evaluate discriminator and generator loss during eval')
 flags.DEFINE_boolean('use_tpu', True, 'Use TPU for training')
 
-_NUM_VIZ_IMAGES = 100   # For generating a 10x10 grid of generator samples
+_NUM_VIZ_IMAGES = 36   # For generating a 10x10 grid of generator samples
 
 # Global variables for data and model
 dataset = None
@@ -77,206 +77,208 @@ model = None
 
 
 def model_fn(features, labels, mode, params):
-  """Constructs DCGAN from individual generator and discriminator networks."""
-  del labels    # Unconditional GAN does not use labels
+    """Constructs DCGAN from individual generator and discriminator networks."""
+    del labels    # Unconditional GAN does not use labels
 
-  if mode == tf.estimator.ModeKeys.PREDICT:
-    ###########
-    # PREDICT #
-    ###########
-    # Pass only noise to PREDICT mode
+    if mode == tf.estimator.ModeKeys.PREDICT:
+        ###########
+        # PREDICT #
+        ###########
+        # Pass only noise to PREDICT mode
+        random_noise = features['random_noise']
+        predictions = {
+            'generated_images': model.generator(random_noise, is_training=False)
+        }
+
+        return tf.contrib.tpu.TPUEstimatorSpec(mode=mode, predictions=predictions)
+
+    # Use params['batch_size'] for the batch size inside model_fn
+    batch_size = params['batch_size']   # pylint: disable=unused-variable
+    real_images = features['real_images']
     random_noise = features['random_noise']
-    predictions = {
-        'generated_images': model.generator(random_noise, is_training=False)
-    }
 
-    return tf.contrib.tpu.TPUEstimatorSpec(mode=mode, predictions=predictions)
+    is_training = (mode == tf.estimator.ModeKeys.TRAIN)
+    generated_images = model.generator(random_noise,
+                                       is_training=is_training)
 
-  # Use params['batch_size'] for the batch size inside model_fn
-  batch_size = params['batch_size']   # pylint: disable=unused-variable
-  real_images = features['real_images']
-  random_noise = features['random_noise']
+    # Get logits from discriminator
+    d_on_data_logits = tf.squeeze(model.discriminator(real_images))
+    d_on_g_logits = tf.squeeze(model.discriminator(generated_images))
 
-  is_training = (mode == tf.estimator.ModeKeys.TRAIN)
-  generated_images = model.generator(random_noise,
-                                     is_training=is_training)
+    # Calculate discriminator loss
+    d_loss_on_data = tf.nn.sigmoid_cross_entropy_with_logits(
+        labels=tf.ones_like(d_on_data_logits),
+        logits=d_on_data_logits)
+    d_loss_on_gen = tf.nn.sigmoid_cross_entropy_with_logits(
+        labels=tf.zeros_like(d_on_g_logits),
+        logits=d_on_g_logits)
 
-  # Get logits from discriminator
-  d_on_data_logits = tf.squeeze(model.discriminator(real_images))
-  d_on_g_logits = tf.squeeze(model.discriminator(generated_images))
+    d_loss = d_loss_on_data + d_loss_on_gen
 
-  # Calculate discriminator loss
-  d_loss_on_data = tf.nn.sigmoid_cross_entropy_with_logits(
-      labels=tf.ones_like(d_on_data_logits),
-      logits=d_on_data_logits)
-  d_loss_on_gen = tf.nn.sigmoid_cross_entropy_with_logits(
-      labels=tf.zeros_like(d_on_g_logits),
-      logits=d_on_g_logits)
+    # Calculate generator loss
+    g_loss = tf.nn.sigmoid_cross_entropy_with_logits(
+        labels=tf.ones_like(d_on_g_logits),
+        logits=d_on_g_logits)
 
-  d_loss = d_loss_on_data + d_loss_on_gen
+    if mode == tf.estimator.ModeKeys.TRAIN:
+        #########
+        # TRAIN #
+        #########
+        d_loss = tf.reduce_mean(d_loss)
+        g_loss = tf.reduce_mean(g_loss)
+        d_optimizer = tf.train.AdamOptimizer(
+            learning_rate=FLAGS.learning_rate, beta1=0.5)
+        g_optimizer = tf.train.AdamOptimizer(
+            learning_rate=FLAGS.learning_rate, beta1=0.5)
 
-  # Calculate generator loss
-  g_loss = tf.nn.sigmoid_cross_entropy_with_logits(
-      labels=tf.ones_like(d_on_g_logits),
-      logits=d_on_g_logits)
+        if FLAGS.use_tpu:
+            d_optimizer = tf.contrib.tpu.CrossShardOptimizer(d_optimizer)
+            g_optimizer = tf.contrib.tpu.CrossShardOptimizer(g_optimizer)
 
-  if mode == tf.estimator.ModeKeys.TRAIN:
-    #########
-    # TRAIN #
-    #########
-    d_loss = tf.reduce_mean(d_loss)
-    g_loss = tf.reduce_mean(g_loss)
-    d_optimizer = tf.train.AdamOptimizer(
-        learning_rate=FLAGS.learning_rate, beta1=0.5)
-    g_optimizer = tf.train.AdamOptimizer(
-        learning_rate=FLAGS.learning_rate, beta1=0.5)
+        with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
+            d_step = d_optimizer.minimize(
+                d_loss,
+                var_list=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
+                                           scope='Discriminator'))
+            g_step = g_optimizer.minimize(
+                g_loss,
+                var_list=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
+                                           scope='Generator'))
 
-    if FLAGS.use_tpu:
-      d_optimizer = tf.contrib.tpu.CrossShardOptimizer(d_optimizer)
-      g_optimizer = tf.contrib.tpu.CrossShardOptimizer(g_optimizer)
+            increment_step = tf.assign_add(
+                tf.train.get_or_create_global_step(), 1)
+            joint_op = tf.group([d_step, g_step, increment_step])
 
-    with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
-      d_step = d_optimizer.minimize(
-          d_loss,
-          var_list=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
-                                     scope='Discriminator'))
-      g_step = g_optimizer.minimize(
-          g_loss,
-          var_list=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
-                                     scope='Generator'))
+            return tf.contrib.tpu.TPUEstimatorSpec(
+                mode=mode,
+                loss=g_loss,
+                train_op=joint_op)
 
-      increment_step = tf.assign_add(tf.train.get_or_create_global_step(), 1)
-      joint_op = tf.group([d_step, g_step, increment_step])
+    elif mode == tf.estimator.ModeKeys.EVAL:
+        ########
+        # EVAL #
+        ########
+        def _eval_metric_fn(d_loss, g_loss):
+            # When using TPUs, this function is run on a different machine than the
+            # rest of the model_fn and should not capture any Tensors defined there
+            return {
+                'discriminator_loss': tf.metrics.mean(d_loss),
+                'generator_loss': tf.metrics.mean(g_loss)}
 
-      return tf.contrib.tpu.TPUEstimatorSpec(
-          mode=mode,
-          loss=g_loss,
-          train_op=joint_op)
+        return tf.contrib.tpu.TPUEstimatorSpec(
+            mode=mode,
+            loss=tf.reduce_mean(g_loss),
+            eval_metrics=(_eval_metric_fn, [d_loss, g_loss]))
 
-  elif mode == tf.estimator.ModeKeys.EVAL:
-    ########
-    # EVAL #
-    ########
-    def _eval_metric_fn(d_loss, g_loss):
-      # When using TPUs, this function is run on a different machine than the
-      # rest of the model_fn and should not capture any Tensors defined there
-      return {
-          'discriminator_loss': tf.metrics.mean(d_loss),
-          'generator_loss': tf.metrics.mean(g_loss)}
-
-    return tf.contrib.tpu.TPUEstimatorSpec(
-        mode=mode,
-        loss=tf.reduce_mean(g_loss),
-        eval_metrics=(_eval_metric_fn, [d_loss, g_loss]))
-
-  # Should never reach here
-  raise ValueError('Invalid mode provided to model_fn')
+    # Should never reach here
+    raise ValueError('Invalid mode provided to model_fn')
 
 
 def generate_input_fn(is_training):
-  """Creates input_fn depending on whether the code is training or not."""
-  return dataset.InputFunction(is_training, FLAGS.noise_dim)
+    """Creates input_fn depending on whether the code is training or not."""
+    return dataset.InputFunction(is_training, FLAGS.noise_dim)
 
 
 def noise_input_fn(params):
-  """Input function for generating samples for PREDICT mode.
+    """Input function for generating samples for PREDICT mode.
 
-  Generates a single Tensor of fixed random noise. Use tf.data.Dataset to
-  signal to the estimator when to terminate the generator returned by
-  predict().
+    Generates a single Tensor of fixed random noise. Use tf.data.Dataset to
+    signal to the estimator when to terminate the generator returned by
+    predict().
 
-  Args:
-    params: param `dict` passed by TPUEstimator.
+    Args:
+      params: param `dict` passed by TPUEstimator.
 
-  Returns:
-    1-element `dict` containing the randomly generated noise.
-  """
-  np.random.seed(0)
-  noise_dataset = tf.data.Dataset.from_tensors(tf.constant(
-      np.random.randn(params['batch_size'], FLAGS.noise_dim), dtype=tf.float32))
-  noise = noise_dataset.make_one_shot_iterator().get_next()
-  return {'random_noise': noise}, None
+    Returns:
+      1-element `dict` containing the randomly generated noise.
+    """
+    np.random.seed(0)
+    noise_dataset = tf.data.Dataset.from_tensors(tf.constant(
+        np.random.randn(params['batch_size'], FLAGS.noise_dim), dtype=tf.float32))
+    noise = noise_dataset.make_one_shot_iterator().get_next()
+    return {'random_noise': noise}, None
 
 
 def main(argv):
-  del argv
-  tpu_cluster_resolver = tf.contrib.cluster_resolver.TPUClusterResolver(
-      FLAGS.tpu,
-      zone=FLAGS.tpu_zone,
-      project=FLAGS.gcp_project)
+    del argv
+    tpu_cluster_resolver = tf.contrib.cluster_resolver.TPUClusterResolver(
+        FLAGS.tpu,
+        zone=FLAGS.tpu_zone,
+        project=FLAGS.gcp_project)
 
-  config = tf.contrib.tpu.RunConfig(
-      cluster=tpu_cluster_resolver,
-      model_dir=FLAGS.model_dir,
-      tpu_config=tf.contrib.tpu.TPUConfig(
-          num_shards=FLAGS.num_shards,
-          iterations_per_loop=FLAGS.iterations_per_loop))
+    config = tf.contrib.tpu.RunConfig(
+        cluster=tpu_cluster_resolver,
+        model_dir=FLAGS.model_dir,
+        tpu_config=tf.contrib.tpu.TPUConfig(
+            num_shards=FLAGS.num_shards,
+            iterations_per_loop=FLAGS.iterations_per_loop))
 
-  # Set module-level global variable so that model_fn and input_fn can be
-  # identical for each different kind of dataset and model
-  global dataset, model
-  if FLAGS.dataset == 'mnist':
-    dataset = mnist_input
-    model = mnist_model
-  elif FLAGS.dataset == 'cifar':
-    dataset = cifar_input
-    model = cifar_model
-  else:
-    raise ValueError('Invalid dataset: %s' % FLAGS.dataset)
+    # Set module-level global variable so that model_fn and input_fn can be
+    # identical for each different kind of dataset and model
+    global dataset, model
+    if FLAGS.dataset == 'mnist':
+        dataset = mnist_input
+        model = mnist_model
+    elif FLAGS.dataset == 'cifar':
+        dataset = cifar_input
+        model = cifar_model
+    else:
+        raise ValueError('Invalid dataset: %s' % FLAGS.dataset)
 
-  # TPU-based estimator used for TRAIN and EVAL
-  est = tf.contrib.tpu.TPUEstimator(
-      model_fn=model_fn,
-      use_tpu=FLAGS.use_tpu,
-      config=config,
-      train_batch_size=FLAGS.batch_size,
-      eval_batch_size=FLAGS.batch_size)
+    # TPU-based estimator used for TRAIN and EVAL
+    est = tf.contrib.tpu.TPUEstimator(
+        model_fn=model_fn,
+        use_tpu=FLAGS.use_tpu,
+        config=config,
+        train_batch_size=FLAGS.batch_size,
+        eval_batch_size=FLAGS.batch_size)
 
-  # CPU-based estimator used for PREDICT (generating images)
-  cpu_est = tf.contrib.tpu.TPUEstimator(
-      model_fn=model_fn,
-      use_tpu=False,
-      config=config,
-      predict_batch_size=_NUM_VIZ_IMAGES)
+    # CPU-based estimator used for PREDICT (generating images)
+    cpu_est = tf.contrib.tpu.TPUEstimator(
+        model_fn=model_fn,
+        use_tpu=False,
+        config=config,
+        predict_batch_size=_NUM_VIZ_IMAGES)
 
-  tf.gfile.MakeDirs(os.path.join(FLAGS.model_dir, 'generated_images'))
+    tf.gfile.MakeDirs(os.path.join(FLAGS.model_dir, 'generated_images'))
 
-  current_step = estimator._load_global_step_from_checkpoint_dir(FLAGS.model_dir)   # pylint: disable=protected-access,line-too-long
-  tf.logging.info('Starting training for %d steps, current step: %d' %
-                  (FLAGS.train_steps, current_step))
-  while current_step < FLAGS.train_steps:
-    next_checkpoint = min(current_step + FLAGS.train_steps_per_eval,
-                          FLAGS.train_steps)
-    est.train(input_fn=generate_input_fn(True),
-              max_steps=next_checkpoint)
-    current_step = next_checkpoint
-    tf.logging.info('Finished training step %d' % current_step)
+    current_step = estimator._load_global_step_from_checkpoint_dir(
+        FLAGS.model_dir)   # pylint: disable=protected-access,line-too-long
+    tf.logging.info('Starting training for %d steps, current step: %d' %
+                    (FLAGS.train_steps, current_step))
+    while current_step < FLAGS.train_steps:
+        next_checkpoint = min(current_step + FLAGS.train_steps_per_eval,
+                              FLAGS.train_steps)
+        est.train(input_fn=generate_input_fn(True),
+                  max_steps=next_checkpoint)
+        current_step = next_checkpoint
+        tf.logging.info('Finished training step %d' % current_step)
 
-    if FLAGS.eval_loss:
-      # Evaluate loss on test set
-      metrics = est.evaluate(input_fn=generate_input_fn(False),
-                             steps=dataset.NUM_EVAL_IMAGES // FLAGS.batch_size)
-      tf.logging.info('Finished evaluating')
-      tf.logging.info(metrics)
+        if FLAGS.eval_loss:
+            # Evaluate loss on test set
+            metrics = est.evaluate(input_fn=generate_input_fn(False),
+                                   steps=dataset.NUM_EVAL_IMAGES // FLAGS.batch_size)
+            tf.logging.info('Finished evaluating')
+            tf.logging.info(metrics)
 
-    # Render some generated images
-    generated_iter = cpu_est.predict(input_fn=noise_input_fn)
-    images = [p['generated_images'][:, :, :] for p in generated_iter]
-    assert len(images) == _NUM_VIZ_IMAGES
-    image_rows = [np.concatenate(images[i:i+10], axis=0)
-                  for i in range(0, _NUM_VIZ_IMAGES, 10)]
-    tiled_image = np.concatenate(image_rows, axis=1)
+        # Render some generated images
+        generated_iter = cpu_est.predict(input_fn=noise_input_fn)
+        images = [p['generated_images'][:, :, :] for p in generated_iter]
+        assert len(images) == _NUM_VIZ_IMAGES
+        image_rows = [np.concatenate(images[i:i+10], axis=0)
+                      for i in range(0, _NUM_VIZ_IMAGES, 10)]
+        tiled_image = np.concatenate(image_rows, axis=1)
 
-    img = dataset.convert_array_to_image(tiled_image)
+        img = dataset.convert_array_to_image(tiled_image)
 
-    step_string = str(current_step).zfill(5)
-    file_obj = tf.gfile.Open(
-        os.path.join(FLAGS.model_dir,
-                     'generated_images', 'gen_%s.png' % (step_string)), 'w')
-    img.save(file_obj, format='png')
-    tf.logging.info('Finished generating images')
+        step_string = str(current_step).zfill(5)
+        file_obj = tf.gfile.Open(
+            os.path.join(FLAGS.model_dir,
+                         'generated_images', 'gen_%s.png' % (step_string)), 'w')
+        img.save(file_obj, format='png')
+        tf.logging.info('Finished generating images')
 
 
 if __name__ == '__main__':
-  tf.logging.set_verbosity(tf.logging.INFO)
-  app.run(main)
+    tf.logging.set_verbosity(tf.logging.INFO)
+    app.run(main)
