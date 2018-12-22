@@ -97,7 +97,7 @@ def convert_folder_tf(data_dir, output_file, display_images, image_size):
                             }))
                             serialized_example = example.SerializeToString()
                             record_writer.write(serialized_example)
- 
+    print("Done!")
 
 
  
