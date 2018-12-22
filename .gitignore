@@ -1,6 +1,7 @@
 .DS_Store
 data
 test
+images/masks
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
