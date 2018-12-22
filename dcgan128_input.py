@@ -29,10 +29,8 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string('train_data_file', '',
                     'Path to CIFAR10 training data.')
 flags.DEFINE_string('test_data_file', '', 'Path to CIFAR10 test data.')
-flags.DEFINE_integer('image_size', 128,
-                     'Image size. Default is 128')
 
-image_size = 128
+image_size = 64
 
 
 def parser(serialized_example):
@@ -60,8 +58,6 @@ class InputFunction(object):
         self.noise_dim = noise_dim
         self.data_file = (FLAGS.train_data_file if is_training
                           else FLAGS.test_data_file)
-        self.image_size = FLAGS.image_size
-        image_size = FLAGS.image_size
 
     def __call__(self, params):
         batch_size = params['batch_size']
@@ -74,7 +70,7 @@ class InputFunction(object):
 
         # Reshape to give inputs statically known shapes.
         images = tf.reshape(
-            images, [batch_size, self.image_size, self.image_size, 3])
+            images, [batch_size, image_size, image_size, 3])
 
         random_noise = tf.random_normal([batch_size, self.noise_dim])
 

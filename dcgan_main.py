@@ -27,8 +27,9 @@ import absl.logging as _logging  # pylint: disable=unused-import
 import numpy as np
 import tensorflow as tf
 
-import dcgan_input
+import dcgan64_input
 import dcgan64_model
+import dcgan64_input
 import dcgan128_model
 from tensorflow.python.estimator import estimator
 
@@ -216,10 +217,10 @@ def main(argv):
     # identical for each different kind of dataset and model
     global dataset, model
     if FLAGS.dataset == 'dcgan64':
-        dataset = dcgan_input
+        dataset = dcgan64_input
         model = dcgan64_model
     elif FLAGS.dataset == 'dcgan128':
-        dataset = dcgan_input
+        dataset = dcgan128_input
         model = dcgan128_model
     else:
         raise ValueError('Invalid dataset: %s' % FLAGS.dataset)

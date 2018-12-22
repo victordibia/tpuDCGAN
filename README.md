@@ -10,7 +10,19 @@ This repo contains code to train an unconditional DCGAN using TPUs on Google Clo
 The `convert_to_tfrecords` script accepts arguments for data directory (`data_dir`) and output file (`output_file`). Data directory is expected to have folders which contain images directly.
 
 ```shell
-python convert_to_tfrecords
+python convert_to_tfrecords --data_dir=images/cifar --output_file=images/cifar/train.tfrecords --image_size=128
+```
+
+Expected
+```
+images
+├── cifar
+    ├── train
+        └── train_image1.jpg
+        └── train_image2.jpg
+    └── test
+        └── test_image1.jpg
+        └── test_image2.jpg
 ```
 
 ## Training
