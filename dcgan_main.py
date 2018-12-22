@@ -27,8 +27,9 @@ import absl.logging as _logging  # pylint: disable=unused-import
 import numpy as np
 import tensorflow as tf
 
-import cifar_input
-import cifar_model
+import dcgan_input
+import dcgan64_model
+import dcgan128_model
 from tensorflow.python.estimator import estimator
 
 FLAGS = flags.FLAGS
@@ -214,12 +215,12 @@ def main(argv):
     # Set module-level global variable so that model_fn and input_fn can be
     # identical for each different kind of dataset and model
     global dataset, model
-    if FLAGS.dataset == 'mnist':
-        dataset = mnist_input
-        model = mnist_model
-    elif FLAGS.dataset == 'cifar':
-        dataset = cifar_input
-        model = cifar_model
+    if FLAGS.dataset == 'dcgan64':
+        dataset = dcgan_input
+        model = dcgan64_model
+    elif FLAGS.dataset == 'dcgan128':
+        dataset = dcgan_input
+        model = dcgan128_model
     else:
         raise ValueError('Invalid dataset: %s' % FLAGS.dataset)
 

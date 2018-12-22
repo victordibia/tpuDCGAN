@@ -25,21 +25,11 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-FLAGS = flags.FLAGS
-flags.DEFINE_integer('image_size', 128,
-                     'Image size. Default is 128')
-flags.DEFINE_integer('df_dim', 64,
-                     'Number of filters for discriminator')
-flags.DEFINE_integer('gf_dim', 64,
-                     'Number of filters for generator')
-flags.DEFINE_integer('c_dim', 3,
-                     'Number of image channels')
-
-image_size = FLAGS.image_size
-s16 = image_size // 32
-df_dim = FLAGS.df_dim
-gf_dim = FLAGS.gf_dim
-c_dim = FLAGS.gf_dim
+image_size = 64
+s16 = image_size // 16
+df_dim = 64  # Number of filters for discriminator
+gf_dim = 64  # Number of filters for generator
+c_dim = 3  # Number of image channels
 
 
 def _leaky_relu(x):
