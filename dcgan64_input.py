@@ -28,7 +28,7 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_string('train_data_file_64', '',
                     'Path to CIFAR10 training data.')
-flags.DEFINE_string('test_data_file', '', 'Path to CIFAR10 test data.')
+flags.DEFINE_string('test_data_file_64', '', 'Path to CIFAR10 test data.')
 
 image_size = 64
 
