@@ -29,7 +29,7 @@ import tensorflow as tf
 
 import dcgan64_input
 import dcgan64_model
-import dcgan64_input
+import dcgan128_input
 import dcgan128_model
 from tensorflow.python.estimator import estimator
 
