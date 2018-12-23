@@ -26,7 +26,7 @@ import tensorflow as tf
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_string('train_data_file', '',
+flags.DEFINE_string('train_data_file_64', '',
                     'Path to CIFAR10 training data.')
 flags.DEFINE_string('test_data_file', '', 'Path to CIFAR10 test data.')
 
