@@ -56,8 +56,8 @@ class InputFunction(object):
     def __init__(self, is_training, noise_dim):
         self.is_training = is_training
         self.noise_dim = noise_dim
-        self.data_file = (FLAGS.train_data_file if is_training
-                          else FLAGS.test_data_file)
+        self.data_file = (FLAGS.train_data_file_64 if is_training
+                          else FLAGS.test_data_file_64)
 
     def __call__(self, params):
         batch_size = params['batch_size']
