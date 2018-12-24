@@ -131,6 +131,7 @@ def model_fn(features, labels, mode, params):
         g_optimizer = tf.train.AdamOptimizer(
             learning_rate=FLAGS.learning_rate, beta1=0.5)
 
+        # convert d/g optimizers to tpu optimizers if use_tpu flag is set.
         if FLAGS.use_tpu:
             d_optimizer = tf.contrib.tpu.CrossShardOptimizer(d_optimizer)
             g_optimizer = tf.contrib.tpu.CrossShardOptimizer(g_optimizer)

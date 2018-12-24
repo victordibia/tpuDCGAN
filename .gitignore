@@ -1,6 +1,7 @@
 .DS_Store
 data
 test
+test.py
 images/masks
 images/cifar
 
