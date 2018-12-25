@@ -12,9 +12,10 @@ import argparse
 import os
 import sys
 import io
-import scipy.misc
+
+import utils.imutils as imutils
 import numpy as np
-import tensorflow as tf 
+import tensorflow as tf
 import matplotlib.pyplot as plt
 
 
@@ -25,43 +26,6 @@ def _int64_feature(value):
 def _bytes_feature(value):
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
-
- 
-
-def imread(path):
-    img = scipy.misc.imread(path)
-    if len(img.shape) == 0:
-        raise ValueError(path + " got loaded as a dimensionless array!")
-    return img.astype(np.float)
-
-def center_crop(x, crop_h, crop_w=None, resize_w=64):
-    h, w = x.shape[:2]
-    crop_h = min(h, w)  # we changed this to override the original DCGAN-TensorFlow behavior
-                        # Just use as much of the image as possible while keeping it square
-    if crop_w is None:
-        crop_w = crop_h
-    j = int(round((h - crop_h)/2.))
-    i = int(round((w - crop_w)/2.))
-    return scipy.misc.imresize(x[j:j+crop_h, i:i+crop_w],
-                               [resize_w, resize_w])
-
-def transform(image, npx=64, is_crop=True, resize_w=64):
-    # npx : # of pixels width/height of image
-    cropped_image = center_crop(image, npx, resize_w=resize_w)
-    return np.array(cropped_image)/127.5 - 1.
-
-def get_image(image_path, image_size, is_crop=True, resize_w=64):
-    global index
-    out = transform(imread(image_path), image_size, is_crop, resize_w)
-    return out
-
-def colorize(img):
-    if img.ndim == 2:
-        img = img.reshape(img.shape[0], img.shape[1], 1)
-        img = np.concatenate([img, img, img], axis=2)
-    if img.shape[2] == 4:
-        img = img[:, :, 0:3]
-    return img
 
 def convert_folder_tf(data_dir, output_file, display_images, image_size):
     index = 0
@@ -77,9 +41,9 @@ def convert_folder_tf(data_dir, output_file, display_images, image_size):
                     file_path = os.path.join(data_dir, dir, f)
                     if file_path.split(".")[1] == "jpg" or file_path.split(".")[1] == "png":
                         index += 1
-                        image = get_image(
+                        image = imutils.get_image(
                             file_path, image_size, is_crop=True, resize_w=image_size)
-                        image = colorize(image)
+                        image = imutils.colorize(image)
                         assert image.shape == (image_size, image_size, 3)
                         if (image.shape == (image_size, image_size, 3)):
                             image += 1.
@@ -90,7 +54,8 @@ def convert_folder_tf(data_dir, output_file, display_images, image_size):
                                 plt.imshow(image)
                                 plt.show()
                             bytes_feat = _bytes_feature(image_raw)
-                            print(index, " Writing to tfrecord | ", " Image size: ", image_size, " Directory: ", dir)
+                            print(index, " Writing to tfrecord | ",
+                                  " Image size: ", image_size, " Directory: ", dir)
                             example = tf.train.Example(features=tf.train.Features(feature={
                                 'image': _bytes_feature(image_raw),
                                 'label': _int64_feature(dir_count)
@@ -99,8 +64,6 @@ def convert_folder_tf(data_dir, output_file, display_images, image_size):
                             record_writer.write(serialized_example)
     print("Done!")
 
-
- 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -126,5 +89,6 @@ if __name__ == '__main__':
         help='To display during conversion')
 
     args = parser.parse_args()
-    print(args) 
-    convert_folder_tf(args.data_dir, args.output_file, args.display_images, args.image_size)
+    print(args)
+    convert_folder_tf(args.data_dir, args.output_file,
+                      args.display_images, args.image_size)
