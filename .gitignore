@@ -4,6 +4,8 @@ test
 test.py
 images/masks
 images/cifar
+images/cups
+models
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

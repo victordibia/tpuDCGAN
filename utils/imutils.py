@@ -1,5 +1,8 @@
 import scipy.misc
-import utils.imutils as imutils
+import numpy as np
+from PIL import Image
+
+# Image cropping code from https://github.com/openai/improved-gan/blob/master/imagenet/convert_imagenet_to_records.py
 
 
 def imread(path):
@@ -7,6 +10,14 @@ def imread(path):
     if len(img.shape) == 0:
         raise ValueError(path + " got loaded as a dimensionless array!")
     return img.astype(np.float)
+
+
+def convert_array_to_image(array):
+    """Converts a numpy array to a PIL Image and undoes any rescaling."""
+    img = Image.fromarray(np.uint8((array + 1.0) / 2.0 * 255), mode='RGB')
+    # plt.imshow(img)
+    # plt.show()
+    return img
 
 
 def center_crop(x, crop_h, crop_w=None, resize_w=64):
