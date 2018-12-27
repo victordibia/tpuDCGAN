@@ -17,6 +17,12 @@
 Based on the convolutional and "deconvolutional" models presented in
 "Unsupervised Representation Learning with Deep Convolutional Generative
 Adversarial Networks" by A. Radford et. al.
+
+
+Extended to:
+- Support 64 * 64 images
+- Add 2 additional layers to discriminator and generator.
+- Add support for image_size flags. Note: You will need to modify D and G to support new image sizes.
 """
 
 from __future__ import absolute_import
