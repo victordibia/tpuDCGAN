@@ -28,7 +28,7 @@ images
 
 ## Training
 
-- Please follow the official tensorflow tutorial on setting up a TPU instance. 
+- Please follow the official tensorflow tutorial on [setting up a TPU instance](https://cloud.google.com/tpu/docs/quickstart). Also see tutorial on running sample [MNIST model](https://cloud.google.com/tpu/docs/tutorials/mnist) on TPUs. 
 - Clone this repo
 ```shell
 git clone https://github.com/victordibia/tpuDCGAN
