@@ -3,7 +3,8 @@
 This repo contains code to train an unconditional DCGAN using TPUs on Google Cloud. It is based on the experimental TPU examples with the following modifications  
 
 - Support for `64*64` and `128*128` generation: Provide two model architectures (mainly additional layers) that support generating higher resolution images (64, 128).
-- Images to TFRecords: A script is available to convert images in a folder to TFRecords required to train the DCGAN.
+- Images to TFRecords: A [script](utils/convert_to_tfrecords.py) is available to convert images in a folder to TFRecords required to train the DCGAN.
+- Trained models: Trained [models](models) for generating masks are available in the models folder and a [script](generate_from_model.py) for generating images is included.
 
 ## Convert Images
 
