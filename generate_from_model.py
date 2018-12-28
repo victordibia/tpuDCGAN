@@ -33,7 +33,7 @@ def noise_input_fn(params):
     Returns:
       1-element `dict` containing the randomly generated noise.
     """
-    np.random.seed(20)
+    np.random.seed(50)
     noise_dataset = tf.data.Dataset.from_tensors(tf.constant(
         np.random.randn(params['batch_size'], noise_dim), dtype=tf.float32))
     noise = noise_dataset.make_one_shot_iterator().get_next()
