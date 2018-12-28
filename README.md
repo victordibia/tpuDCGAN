@@ -38,3 +38,11 @@ export GCS_BUCKET_NAME=  <Your GCS Bucket>
 python dcgan_main.py --tpu=$TPU_NAME --train_data_file=gs://$GCS_BUCKET_NAME/data/masks/train_masks.tfrecords   --dataset=dcgan64 --train_steps=10000 --train_steps_per_eval=500 --model_dir=gs://$GCS_BUCKET_NAME/dcgan/masks/model --test_data_file=gs://$GCS_BUCKET_NAME/data/rand/test.tfrecords
 
 ```
+
+## Trained Models
+
+Interested in generating masks? This repo contains two trained [models](models) (64px and 128px). You can use the generate script to generate images using any of the models.
+
+```
+python generate_from_model.py --model_dir=models/masks/128/model.ckpt-15000 --image_size=128 --output_dir=models/masks/128
+```
