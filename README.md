@@ -1,6 +1,10 @@
 ## Train a GAN using TPUs and Tensorflow on Google Cloud
 
-This repo contains code to train an unconditional DCGAN using TPUs on Google Cloud. It is based on the experimental TPU examples with the following modifications  
+> Screenshot below shows 64px images generated using the code provided.
+
+<img src="models/masks/64/banner.jpg" style="width:100%">
+
+This repo contains code to train an unconditional DCGAN ([Radford et al 2017](http://www.arxiv.org/pdf/1511.06434.pdf)) using TPUs on Google Cloud. It is based on the [DCGAN TPU example](https://github.com/tensorflow/tpu/tree/master/models/experimental/dcgan) by the Google Tensorflow team with the following modifications  
 
 - Support for `64*64` and `128*128` generation: Provide two model architectures (mainly additional layers) that support generating higher resolution images (64, 128).
 - Images to TFRecords: A [script](utils/convert_to_tfrecords.py) is available to convert images in a folder to TFRecords required to train the DCGAN.

@@ -210,7 +210,7 @@ def main(argv):
     config = tf.contrib.tpu.RunConfig(
         cluster=tpu_cluster_resolver,
         model_dir=FLAGS.model_dir,
-        keep_checkpoint_max=20,
+        keep_checkpoint_max=10,
         tpu_config=tf.contrib.tpu.TPUConfig(
             num_shards=FLAGS.num_shards,
             iterations_per_loop=FLAGS.iterations_per_loop))

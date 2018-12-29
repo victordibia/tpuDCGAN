@@ -18,6 +18,7 @@ import dcgan128_model
 noise_dim = 100
 current_step = 0
 model = None
+random_seed = 2
 
 
 def noise_input_fn(params):
@@ -33,7 +34,7 @@ def noise_input_fn(params):
     Returns:
       1-element `dict` containing the randomly generated noise.
     """
-    np.random.seed(50)
+    np.random.seed(random_seed)
     noise_dataset = tf.data.Dataset.from_tensors(tf.constant(
         np.random.randn(params['batch_size'], noise_dim), dtype=tf.float32))
     noise = noise_dataset.make_one_shot_iterator().get_next()
@@ -89,12 +90,13 @@ def generate_images(image_size, model_dir, output_dir):
 
     step_string = str(current_step).zfill(5)
     file_obj = tf.gfile.Open(
-        os.path.join(output_dir, 'gen.png'), 'w')
+        os.path.join(output_dir, "gen_seed_" + str(random_seed) + '_gen.png'), 'w')
     img.save(file_obj, format='png')
     tf.logging.info('Finished generating images')
 
 
 if __name__ == '__main__':
+
     tf.logging.set_verbosity(tf.logging.INFO)
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -112,12 +114,13 @@ if __name__ == '__main__':
         type=int,
         default=64,
         help='Model to use for generation. Valid values are  [64,128]')
-    # parser.add_argument(
-    #     '--display_images',
-    #     type=int,
-    #     default=0,
-    #     help='To display during conversion')
+    parser.add_argument(
+        '--random_seed',
+        type=int,
+        default=3,
+        help='Random seed to use in generating random noise vector')
 
     args = parser.parse_args()
+    random_seed = args.random_seed
     print(args)
     generate_images(args.image_size, args.model_dir, args.output_dir)
