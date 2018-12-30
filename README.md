@@ -46,8 +46,8 @@ python dcgan_main.py --tpu=$TPU_NAME --train_data_file=gs://$GCS_BUCKET_NAME/dat
 
 ## Trained Models
 
-Interested in generating masks? This repo contains two trained [models](models) (64px and 128px). You can use the generate script to generate images using any of the models.
+Interested in generating masks? This repo contains two trained [models](models) (64px and 128px). You can use the generate script to generate images using any of the models. If you have your own trained DCGAN models (ckpt files) you can point the script to the model directory.
 
 ```
-python generate_from_model.py --model_dir=models/masks/128/model.ckpt-15000 --image_size=128 --output_dir=models/masks/128
+python generate_from_model.py --model_dir=models/masks/128/model.ckpt-15000 --image_size=128 --output_dir=models/masks/128 --random_seed=2
 ```
